@@ -7,133 +7,140 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
 </head>
 <body>
-<div class="container">
-    <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
-        <div class="col-md-3 mb-2 mb-md-0">
-            <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
-                <h1>Handimapper</h1>
-            </a>
-        </div>
+    <div class="container">
+        <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+            <div class="col-md-3 mb-2 mb-md-0">
+                <a href="/" class="d-inline-flex link-body-emphasis text-decoration-none">
+                    <h1>Handimapper</h1>
+                </a>
+            </div>
 
-        <div class="col-md-3 text-end">
-            <div sec:authorize="isAuthenticated()">
-                <button type="button" class="btn btn-outline-primary me-2" onclick="window.location.href='/profile';">Mon profil</button>
-                <a href="#" th:href="@{/logout}" class="btn btn-primary">Se déconnecter</a>
+            <div class="col-md-3 text-end">
+                <div sec:authorize="isAuthenticated()">
+                    <button type="button" class="btn btn-outline-primary me-2" onclick="window.location.href='/profile';">Mon profil</button>
+                    <a href="#" th:href="@{/logout}" class="btn btn-primary">Se déconnecter</a>
+                </div>
+                <div sec:authorize="!isAuthenticated()">
+                    <button type="button" class="btn btn-outline-primary me-2" onclick="window.location.href='/login';">Se connecter</button>
+                    <button type="button" class="btn btn-primary" onclick="window.location.href='/registration';">S'inscrire</button>
+                </div>
             </div>
-            <div sec:authorize="!isAuthenticated()">
-                <button type="button" class="btn btn-outline-primary me-2" onclick="window.location.href='/login';">Se connecter</button>
-                <button type="button" class="btn btn-primary" onclick="window.location.href='/registration';">S'inscrire</button>
+        </header>
+    </div>
+    <div class="container">
+        <div class="row justify-content-center mb-4">
+            <form class="form-inline d-flex justify-content-center" method="get">
+                <div class="form-group mx-sm-3 mb-2">
+                    <input type="text" class="form-control" id="search-box" name="search" placeholder="Rechercher un lieu">
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div id="map" style="height:500px;"></div>
+                    </div>
+                </div>
             </div>
         </div>
-    </header>
-</div>
-<div class="container">
-    <div class="row justify-content-center mb-4">
-        <form class="form-inline d-flex justify-content-center" method="get">
-            <div class="form-group mx-sm-3 mb-2">
-                <input type="text" class="form-control" id="search-box" name="search" placeholder="Rechercher un lieu">
-            </div>
-        </form>
-    </div>
-</div>
-<div class="container">
-    <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-body">
-                    <div id="map" style="height:500px;"></div>
+        <div id="details" class="row mt-4" style="display: none">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 id="name"></h5>
+                        <a id="note-place" class="btn btn-primary">Noter</a>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Accessibilité :</strong> <span></span></p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div id="details" class="row mt-4" style="display: none">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 id="name"></h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Accessibilité :</strong> <span></span></p>
-                </div>
-            </div>
-        </div>
+    <div class="container">
+        <footer class="d-flex flex-wrap align-items-center justify-content-center py-3">
+            <p class="text-center text-muted mt-3 mb-3">© 2023 Home Trade</p>
+        </footer>
     </div>
-</div>
-<script>
-    function initMap() {
+    <script>
+        function initMap() {
 
-        const map = new google.maps.Map(document.getElementById("map"), {
-            center: {lat: 48.85, lng: 2.35},
-            zoom: 12,
-            mapTypeControl: false,
-            fullscreenControl: false,
-            streetViewControl: false,
-            scaleControl: false
-        });
+            const map = new google.maps.Map(document.getElementById("map"), {
+                center: {lat: 48.85, lng: 2.35},
+                zoom: 12,
+                mapTypeControl: false,
+                fullscreenControl: false,
+                streetViewControl: false,
+                scaleControl: false
+            });
 
-        map.addListener('click', function(event) {
-            const clickedLatLng = event.latLng;
-            const geocoder = new google.maps.Geocoder();
-            geocoder.geocode({ 'location': clickedLatLng }, function(results, status) {
-                if (status === google.maps.GeocoderStatus.OK) {
-                    if (results[0]) {
-                        const result = results[0];
-                        const placeId = result.place_id;
-                        console.log("ID du lieu :", placeId);
-                        getDetails(placeId);
+            map.addListener('click', function(event) {
+                const clickedLatLng = event.latLng;
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ 'location': clickedLatLng }, function(results, status) {
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        if (results[0]) {
+                            const result = results[0];
+                            const placeId = result.place_id;
+                            console.log("ID du lieu :", placeId);
+                            getDetails(placeId);
+                        } else {
+                            console.log("Aucun résultat trouvé");
+                        }
                     } else {
-                        console.log("Aucun résultat trouvé");
+                        console.log("Erreur de géocodage :", status);
                     }
-                } else {
-                    console.log("Erreur de géocodage :", status);
+                });
+            });
+
+            const transitLayer = new google.maps.TransitLayer();
+            transitLayer.setMap(map);
+
+            const placesSearch = new google.maps.places.SearchBox(document.getElementById("search-box"));
+            placesSearch.addListener('places_changed', function () {
+                const places = placesSearch.getPlaces();
+                if (places.length === 0) {
+                    return;
                 }
-            });
-        });
-
-        const transitLayer = new google.maps.TransitLayer();
-        transitLayer.setMap(map);
-
-        const placesSearch = new google.maps.places.SearchBox(document.getElementById("search-box"));
-        placesSearch.addListener('places_changed', function () {
-            const places = placesSearch.getPlaces();
-            if (places.length === 0) {
-                return;
-            }
-            const selectedPlace = places[0];
-            const location = selectedPlace.geometry.location;
-            const zoomLevel = 16;
-            map.setCenter(location);
-            map.setZoom(zoomLevel);
-        });
-
-    }
-
-    function getDetails(placeId) {
-        const url = `http://localhost:8080/place-details?placeId=${placeId}`;
-
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-            })
-            .catch(error => {
-                console.log(error);
+                const selectedPlace = places[0];
+                const location = selectedPlace.geometry.location;
+                const zoomLevel = 16;
+                map.setCenter(location);
+                map.setZoom(zoomLevel);
             });
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                const result = data['result'];
-                console.log(result)
-                document.getElementById("name").textContent = result['name'];
-                document.getElementById("details").style.display = "block";
-            })
-            .catch(error => {
-                console.log(error);
-            });
-    }
+        }
 
-</script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBv1RNdSPkEVqTjPP6sL5y9KOKUDJLqxPg&libraries=places&callback=initMap"></script>
+        function getDetails(placeId) {
+            const url = `http://localhost:8080/place-details?placeId=${placeId}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    const result = data['result'];
+                    console.log(result)
+                    document.getElementById("name").textContent = result['name'];
+                    document.getElementById("details").style.display = "block";
+                    document.getElementById("note-place").setAttribute("href", "http://localhost:8080/note-place/" + result['place_id'])
+                })
+                .catch(error => {
+                    console.log(error);
+                });
+        }
+
+    </script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBv1RNdSPkEVqTjPP6sL5y9KOKUDJLqxPg&libraries=places&callback=initMap"></script>
 </body>
 </html>

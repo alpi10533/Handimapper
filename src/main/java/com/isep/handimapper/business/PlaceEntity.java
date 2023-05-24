@@ -13,6 +13,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "place")
 public class PlaceEntity {
+
     @Id
     @Column(name = "id_place", unique = true, nullable = false)
     private String idPlace;
