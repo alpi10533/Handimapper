@@ -46,18 +46,52 @@
             </div>
         </div>
     </div>
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Nom de la gare</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Emplacement :</strong> Coordonnées GPS</p>
+                    <p><strong>Horaires :</strong> Horaires de départ et d'arrivée des trains</p>
+                    <p><strong>Services :</strong> Informations sur les services disponibles</p>
+                    <p><strong>Correspondances :</strong> Informations sur les correspondances avec d'autres moyens de transport</p>
+                    <p><strong>Accessibilité :</strong> Informations sur les installations pour les personnes à mobilité réduite</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 <script>
     function initMap() {
 
         const map = new google.maps.Map(document.getElementById("map"), {
-            mapId: "8e0a97af9386fef",
             center: {lat: 48.85, lng: 2.35},
             zoom: 12,
             mapTypeControl: false,
             fullscreenControl: false,
             streetViewControl: false,
             scaleControl: false
+        });
+
+        map.addListener('click', function(event) {
+            const clickedLatLng = event.latLng;
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ 'location': clickedLatLng }, function(results, status) {
+                if (status === google.maps.GeocoderStatus.OK) {
+                    if (results[0]) {
+                        const result = results[0];
+                        const placeId = result.place_id;
+                        console.log("ID du lieu :", placeId);
+                        getDetails(placeId);
+                    } else {
+                        console.log("Aucun résultat trouvé");
+                    }
+                } else {
+                    console.log("Erreur de géocodage :", status);
+                }
+            });
         });
 
         const transitLayer = new google.maps.TransitLayer();
@@ -77,6 +111,20 @@
         });
 
     }
+
+    function getDetails(placeId) {
+        const url = `http://localhost:8080/place-details?placeId=${placeId}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    }
+
 </script>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBv1RNdSPkEVqTjPP6sL5y9KOKUDJLqxPg&libraries=places&callback=initMap"></script>
 </body>
