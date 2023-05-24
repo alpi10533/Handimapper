@@ -28,8 +28,7 @@ public class NoteEntity {
     private UserEntity userEntity;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_google", nullable = false)
-    private PlaceEntity idGoogle;
-
+    @JoinColumn(name = "id_place", nullable = false)
+    private PlaceEntity placeEntity;
 
 }
