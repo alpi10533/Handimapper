@@ -3,8 +3,10 @@ package com.isep.handimapper.web;
 import com.isep.handimapper.business.UserEntity;
 import com.isep.handimapper.service.UserService;
 import com.isep.handimapper.util.UserDto;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.history.Revision;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -76,7 +78,6 @@ public class MainController {
                 + "?place_id=" + placeId
                 + "&fields="
                 + "&key=" + apiKey;
-
         WebClient webClient = WebClient.create();
         String responseBody = webClient.get()
                 .uri(url)
@@ -84,8 +85,71 @@ public class MainController {
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
-
         return ResponseEntity.ok(responseBody);
+    }
+
+    @GetMapping("/note-place/{id}")
+    public String noteHousing(@PathVariable("id") String id, Model model, HttpSession session, Authentication authentication) {
+        UserEntity userEntity = userService.findUserByEmail(authentication.getName());
+        PlaceEntity placeEntity = placeService.findPlaceById(id);
+        NoteEntity noteEntity = noteService.findNoteByUserAndHousing(userEntity, placeEntity);
+        NoteDto noteDto = new NoteDto();
+        if (noteEntity != null) {
+            noteDto.setNote(String.valueOf(noteEntity.getNote()));
+        }
+        session.setAttribute("placeEntity", placeEntity);
+        session.setAttribute("noteEntity", noteEntity);
+        model.addAttribute("noteDto", noteDto);
+        return "note-place";
+    }
+
+    @PostMapping("/note-place")
+    public String processNoteHousing(@Valid @ModelAttribute("noteDto") NoteDto noteDto, BindingResult result, Model model, HttpSession session, Authentication authentication) {
+        if (result.hasErrors()) {
+            model.addAttribute("noteDto", noteDto);
+            return "note-place";
+        }
+        NoteEntity noteEntity = (NoteEntity) session.getAttribute("noteEntity");
+        PlaceEntity placeEntity = (HousingEntity) session.getAttribute("placeEntity");
+        if (noteEntity != null) {
+            noteService.updateNote(noteEntity, noteDto);
+        } else {
+            UserEntity userEntity = userService.findUserByEmail(authentication.getName());
+            noteService.saveNote(noteDto, userEntity, placeEntity);
+        }
+        return "redirect:/";
+    }
+
+    @GetMapping("/review-place/{id}")
+    public String reviewPlace(@PathVariable("id") String id, Model model, HttpSession session, Authentication authentication) {
+        UserEntity userEntity = userService.findUserByEmail(authentication.getName());
+        PlaceEntity placeEntity = placeService.findPlaceById(id);
+        ReviewEntity reviewEntity = reviewService.findReviewByUserAndHousing(userEntity, placeEntity);
+        ReviewDto reviewDto = new ReviewDto();
+        if (reviewEntity != null) {
+            reviewDto.setReview(String.valueOf(reviewEntity.getReview()));
+        }
+        session.setAttribute("placeEntity", placeEntity);
+        session.setAttribute("reviewEntity", reviewEntity);
+        model.addAttribute("reviewDto", reviewDto);
+        return "review-place";
+    }
+
+    @PostMapping("/review-place")
+    public String processNoteHousing(@Valid @ModelAttribute("reviewDto") ReviewDto reviewDto, BindingResult result, Model model, HttpSession session, Authentication authentication) {
+        if (result.hasErrors()) {
+            model.addAttribute("reviewDto", reviewDto);
+            return "review-place";
+        }
+        ReviewEntity reviewEntity = (ReviewEntity) session.getAttribute("reviewEntity");
+        PlaceEntity placeEntity = (HousingEntity) session.getAttribute("placeEntity");
+        if (reviewEntity != null) {
+            reviewService.updateReview(reviewEntity, reviewDto);
+        } else {
+            UserEntity userEntity = userService.findUserByEmail(authentication.getName());
+            reviewService.saveReview(reviewDto, userEntity, placeEntity);
+        }
+        return "redirect:/";
     }
 
 }
