@@ -46,18 +46,14 @@
             </div>
         </div>
     </div>
-    <div class="row mt-4">
+    <div id="details" class="row mt-4" style="display: none">
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h5>Nom de la gare</h5>
+                    <h5 id="name"></h5>
                 </div>
                 <div class="card-body">
-                    <p><strong>Emplacement :</strong> Coordonnées GPS</p>
-                    <p><strong>Horaires :</strong> Horaires de départ et d'arrivée des trains</p>
-                    <p><strong>Services :</strong> Informations sur les services disponibles</p>
-                    <p><strong>Correspondances :</strong> Informations sur les correspondances avec d'autres moyens de transport</p>
-                    <p><strong>Accessibilité :</strong> Informations sur les installations pour les personnes à mobilité réduite</p>
+                    <p><strong>Accessibilité :</strong> <span></span></p>
                 </div>
             </div>
         </div>
@@ -119,6 +115,18 @@
             .then(response => response.json())
             .then(data => {
                 console.log(data);
+            })
+            .catch(error => {
+                console.log(error);
+            });
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                const result = data['result'];
+                console.log(result)
+                document.getElementById("name").textContent = result['name'];
+                document.getElementById("details").style.display = "block";
             })
             .catch(error => {
                 console.log(error);
