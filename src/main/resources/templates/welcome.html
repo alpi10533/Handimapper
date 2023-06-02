@@ -117,7 +117,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js" integrity="sha384-fbbOQedDUMZZ5KreZpsbe1LCZPVmfTnH7ois6mU1QK+m14rQ1l2bGBq41eYeM/fS" crossorigin="anonymous"></script>
     <script>
         const apiIp = "localhost";
-        const apiPort = 8080;
+        const apiPort = 80;
 
         function initMap() {
 
@@ -131,25 +131,6 @@
             });
 
             map.addListener('click', function(event) {
-                const clickedLatLng = event.latLng;
-                const geocoder = new google.maps.Geocoder();
-                geocoder.geocode({ 'location': clickedLatLng }, function(results, status) {
-                    if (status === google.maps.GeocoderStatus.OK) {
-                        if (results[0]) {
-                            const result = results[0];
-                            const placeId = result.place_id;
-                            console.log("ID du lieu :", placeId);
-                            getDetails(placeId);
-                        } else {
-                            console.log("Aucun résultat trouvé");
-                        }
-                    } else {
-                        console.log("Erreur de géocodage :", status);
-                    }
-                });
-            });
-
-            map.addEventListener('touchend', function(event) {
                 const clickedLatLng = event.latLng;
                 const geocoder = new google.maps.Geocoder();
                 geocoder.geocode({ 'location': clickedLatLng }, function(results, status) {
@@ -226,7 +207,7 @@
                     content: [
                         {
                             title: "site: ",
-                            text: result["url"],
+                            text: "<a href="+result["url"]+">"+result["url"]+"</a>",
                         },{
                             title: "tel: ",
                             text: result["international_phone_number"],
