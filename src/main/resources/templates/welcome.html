@@ -5,6 +5,45 @@
     <title>Accueil</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+    <link href="welcome.css" rel="stylesheet">
+    <style>
+        .gm-style-iw-t {
+            display: none;
+        }
+
+        .btn-toggle {
+            padding: .25rem .5rem;
+            font-weight: 600;
+            color: var(--bs-emphasis-color);
+            background-color: transparent;
+        }
+        .btn-toggle:hover,
+        .btn-toggle:focus {
+            color: rgba(var(--bs-emphasis-color-rgb), .85);
+            background-color: var(--bs-tertiary-bg);
+        }
+
+        .btn-toggle::before {
+            width: 1.25em;
+            line-height: 0;
+            content: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='rgba%280,0,0,.5%29' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 14l6-6-6-6'/%3e%3c/svg%3e");
+            transition: transform .35s ease;
+            transform-origin: .5em 50%;
+        }
+
+        .btn-toggle[aria-expanded="true"] {
+            color: rgba(var(--bs-emphasis-color-rgb), .85);
+        }
+        .btn-toggle[aria-expanded="true"]::before {
+            transform: rotate(90deg);
+        }
+
+        .btn-toggle-nav li {
+            padding: .1875rem .5rem;
+            margin-top: .125rem;
+            margin-left: 1.25rem;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -49,12 +88,20 @@
         <div id="details" class="row mt-4" style="display: none">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header">
-                        <h5 id="name"></h5>
-                        <a id="note-place" class="btn btn-primary">Noter</a>
+                    <div class="card-header container">
+                        <div class="row">
+                            <div class="col-sm-10" style="padding-top: 0.5em;">
+                                <h5 id="name"></h5>
+                            </div>
+                            <div class="col-sm-2">
+                                <a id="note-place" class="btn btn-primary">Noter</a>
+                                <a id="redirect-maps" class="btn btn-secondary">Maps</a>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <p><strong>Accessibilité :</strong> <span></span></p>
+                        <ul class="list-unstyled ps-0" id="details-list">
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -65,7 +112,13 @@
             <p class="text-center text-muted mt-3 mb-3">© 2023 Home Trade</p>
         </footer>
     </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js" integrity="sha384-fbbOQedDUMZZ5KreZpsbe1LCZPVmfTnH7ois6mU1QK+m14rQ1l2bGBq41eYeM/fS" crossorigin="anonymous"></script>
     <script>
+        const apiIp = "localhost";
+        const apiPort = 8080;
+
         function initMap() {
 
             const map = new google.maps.Map(document.getElementById("map"), {
@@ -78,6 +131,25 @@
             });
 
             map.addListener('click', function(event) {
+                const clickedLatLng = event.latLng;
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ 'location': clickedLatLng }, function(results, status) {
+                    if (status === google.maps.GeocoderStatus.OK) {
+                        if (results[0]) {
+                            const result = results[0];
+                            const placeId = result.place_id;
+                            console.log("ID du lieu :", placeId);
+                            getDetails(placeId);
+                        } else {
+                            console.log("Aucun résultat trouvé");
+                        }
+                    } else {
+                        console.log("Erreur de géocodage :", status);
+                    }
+                });
+            });
+
+            map.addEventListener('touchend', function(event) {
                 const clickedLatLng = event.latLng;
                 const geocoder = new google.maps.Geocoder();
                 geocoder.geocode({ 'location': clickedLatLng }, function(results, status) {
@@ -115,29 +187,104 @@
         }
 
         function getDetails(placeId) {
-            const url = `http://localhost:8080/place-details?placeId=${placeId}`;
-
-            fetch(url)
+            fetch("http://"+apiIp+":"+apiPort+"/place-details"
+                    +"?placeId="+placeId)
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data);
+                    displayDetails(data['result'])
                 })
                 .catch(error => {
                     console.log(error);
                 });
+        }
 
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    const result = data['result'];
-                    console.log(result)
-                    document.getElementById("name").textContent = result['name'];
-                    document.getElementById("details").style.display = "block";
-                    document.getElementById("note-place").setAttribute("href", "http://localhost:8080/note-place/" + result['place_id'])
-                })
-                .catch(error => {
-                    console.log(error);
+        function displayDetails(result) {
+            console.log(result);
+            $("#name").text(result['name']);
+
+            //clear elements
+            $("#details-list").empty();
+
+            detailsDO = [
+                {
+                    name: "Addresse",
+                    exended: false,
+                    id: "address",
+                    content: [
+                        {
+                            title: "address: ",
+                            text: result["formatted_address"],
+                        },{
+                            title: "coordonés: ",
+                            text: result["geometry"]["location"].lat+" "+result["geometry"]["location"].lng,
+                        }
+                    ]
+                },{
+                    name: "Coordonées",
+                    exended: false,
+                    id: "coordinates",
+                    content: [
+                        {
+                            title: "site: ",
+                            text: result["url"],
+                        },{
+                            title: "tel: ",
+                            text: result["international_phone_number"],
+                        }
+                    ]
+                },{
+                    name: "Accessibilité",
+                    exended: true,
+                    id: "accessibility",
+                    content: [
+                        {
+                            title: "ascenseur: ",
+                            text: "oui",
+                        },
+                        {
+                            title: "escalator: ",
+                            text: "non",
+                        },
+                        {
+                            title: "note d'accesibilité du lieux: ",
+                            text: "80%",
+                        }
+                    ]
+                }
+            ];
+
+            detailsDO.forEach(element => {
+                ariaExended = element.exended ? "true" : "false";
+                collapse = element.exended ? "collapse show" : "collapse";
+                $("#details-list").append("<li class=\"mb-1\">"
+                    +"<button class=\"btn btn-toggle d-inline-flex align-items-center rounded border-0 collapsed\" data-bs-toggle=\"collapse\" data-bs-target=\"#"+element.id+"-collapse\" aria-expanded=\""+ariaExended+"\">"+element.name+"</button>"
+                    +"<div class=\""+collapse+"\" id=\""+element.id+"-collapse\">"
+                        +"<ul class=\"btn-toggle-nav list-unstyled fw-normal pb-1 small card-information\" id=\""+element.id+"-list\">"
+                        +"</ul>"
+                    +"</div>"
+                +"</li>");
+
+                element.content.forEach(subElement => {
+                    if (subElement.text != undefined && subElement.text != "")
+                        $("#"+element.id+"-list").append(
+                            "<li><b>"+subElement.title+"</b>"+subElement.text+"</li>"
+                        );
                 });
+            });
+
+            $("#card-address").append("<li><b>addresse:</b> "+result['formatted_address']+"</li>");
+            console.log(result['test'] != undefined);
+
+            $("#note-place").click(function(event) {
+                event.preventDefault();
+                window.location.href="note-place/"+result["place_id"];
+            })
+            $("#redirect-maps").click(function(event) {
+                event.preventDefault();
+                window.open(result["url"]);
+            })
+
+            $("#details").css("display", "block");
         }
 
     </script>
