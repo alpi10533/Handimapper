@@ -1,12 +1,19 @@
 package com.isep.handimapper.web;
 
+import com.isep.handimapper.business.NoteEntity;
+import com.isep.handimapper.business.PlaceEntity;
+import com.isep.handimapper.business.ReviewEntity;
 import com.isep.handimapper.business.UserEntity;
+import com.isep.handimapper.service.NoteService;
+import com.isep.handimapper.service.PlaceService;
+import com.isep.handimapper.service.ReviewService;
 import com.isep.handimapper.service.UserService;
+import com.isep.handimapper.util.NoteDto;
+import com.isep.handimapper.util.ReviewDto;
 import com.isep.handimapper.util.UserDto;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.history.Revision;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -14,7 +21,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @CrossOrigin
@@ -22,10 +28,16 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class MainController {
 
     private final UserService userService;
+    private final PlaceService placeService;
+    private final NoteService noteService;
+    private final ReviewService reviewService;
 
     @Autowired
-    public MainController(UserService userService) {
+    public MainController(UserService userService, PlaceService placeService, NoteService noteService, ReviewService reviewService) {
         this.userService = userService;
+        this.placeService = placeService;
+        this.noteService = noteService;
+        this.reviewService = reviewService;
     }
 
     @GetMapping("/")
@@ -59,11 +71,6 @@ public class MainController {
         return "redirect:/registration?success";
     }
 
-    @GetMapping("/index")
-    public String index() {
-        return "index";
-    }
-
     @GetMapping("/profile")
     public String profile(Model model, Authentication authentication) {
         UserEntity user = userService.findUserByEmail(authentication.getName());
@@ -89,10 +96,10 @@ public class MainController {
     }
 
     @GetMapping("/note-place/{id}")
-    public String noteHousing(@PathVariable("id") String id, Model model, HttpSession session, Authentication authentication) {
+    public String notePlace(@PathVariable("id") String id, Model model, HttpSession session, Authentication authentication) {
         UserEntity userEntity = userService.findUserByEmail(authentication.getName());
         PlaceEntity placeEntity = placeService.findPlaceById(id);
-        NoteEntity noteEntity = noteService.findNoteByUserAndHousing(userEntity, placeEntity);
+        NoteEntity noteEntity = noteService.findNoteByUserAndPlace(userEntity, placeEntity);
         NoteDto noteDto = new NoteDto();
         if (noteEntity != null) {
             noteDto.setNote(String.valueOf(noteEntity.getNote()));
@@ -110,7 +117,7 @@ public class MainController {
             return "note-place";
         }
         NoteEntity noteEntity = (NoteEntity) session.getAttribute("noteEntity");
-        PlaceEntity placeEntity = (HousingEntity) session.getAttribute("placeEntity");
+        PlaceEntity placeEntity = (PlaceEntity) session.getAttribute("placeEntity");
         if (noteEntity != null) {
             noteService.updateNote(noteEntity, noteDto);
         } else {
@@ -124,10 +131,10 @@ public class MainController {
     public String reviewPlace(@PathVariable("id") String id, Model model, HttpSession session, Authentication authentication) {
         UserEntity userEntity = userService.findUserByEmail(authentication.getName());
         PlaceEntity placeEntity = placeService.findPlaceById(id);
-        ReviewEntity reviewEntity = reviewService.findReviewByUserAndHousing(userEntity, placeEntity);
+        ReviewEntity reviewEntity = reviewService.findReviewByUserAndPlace(userEntity, placeEntity);
         ReviewDto reviewDto = new ReviewDto();
         if (reviewEntity != null) {
-            reviewDto.setReview(String.valueOf(reviewEntity.getReview()));
+            reviewDto.setReview(reviewEntity.getReview());
         }
         session.setAttribute("placeEntity", placeEntity);
         session.setAttribute("reviewEntity", reviewEntity);
@@ -142,7 +149,7 @@ public class MainController {
             return "review-place";
         }
         ReviewEntity reviewEntity = (ReviewEntity) session.getAttribute("reviewEntity");
-        PlaceEntity placeEntity = (HousingEntity) session.getAttribute("placeEntity");
+        PlaceEntity placeEntity = (PlaceEntity) session.getAttribute("placeEntity");
         if (reviewEntity != null) {
             reviewService.updateReview(reviewEntity, reviewDto);
         } else {

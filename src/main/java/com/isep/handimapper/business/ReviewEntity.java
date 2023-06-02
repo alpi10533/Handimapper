@@ -13,15 +13,21 @@ import lombok.Setter;
 @Entity
 @Table(name = "review")
 public class ReviewEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_review",unique = true,nullable = false)
+    @Column(name = "id_review", unique = true ,nullable = false)
     private Long idReview;
 
-    @Column(name = "comment")
-    private String comment;
+    @Column(name = "review")
+    private String review;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_user", nullable = false)
     private UserEntity userEntity;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_place", nullable = false)
+    private PlaceEntity placeEntity;
+
 }
