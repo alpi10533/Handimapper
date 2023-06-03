@@ -78,7 +78,7 @@ public class MainController {
         return "profile";
     }
 
-    @GetMapping("/place-details")
+    @GetMapping("/place-google-details")
     public ResponseEntity<?> getPlaceDetails(@RequestParam String placeId) {
         String apiKey = "AIzaSyBv1RNdSPkEVqTjPP6sL5y9KOKUDJLqxPg";
         String url = "https://maps.googleapis.com/maps/api/place/details/json"
@@ -99,6 +99,9 @@ public class MainController {
     public String notePlace(@PathVariable("id") String id, Model model, HttpSession session, Authentication authentication) {
         UserEntity userEntity = userService.findUserByEmail(authentication.getName());
         PlaceEntity placeEntity = placeService.findPlaceById(id);
+        if (placeEntity == null) {
+            placeService.savePlace(id);
+        }
         NoteEntity noteEntity = noteService.findNoteByUserAndPlace(userEntity, placeEntity);
         NoteDto noteDto = new NoteDto();
         if (noteEntity != null) {
@@ -131,6 +134,9 @@ public class MainController {
     public String reviewPlace(@PathVariable("id") String id, Model model, HttpSession session, Authentication authentication) {
         UserEntity userEntity = userService.findUserByEmail(authentication.getName());
         PlaceEntity placeEntity = placeService.findPlaceById(id);
+        if (placeEntity == null) {
+            placeService.savePlace(id);
+        }
         ReviewEntity reviewEntity = reviewService.findReviewByUserAndPlace(userEntity, placeEntity);
         ReviewDto reviewDto = new ReviewDto();
         if (reviewEntity != null) {

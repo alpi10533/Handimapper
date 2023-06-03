@@ -18,6 +18,7 @@ public class NoteService {
     public NoteService(NoteRepository noteRepository) {
         this.noteRepository = noteRepository;
     }
+
     public void saveNote(NoteDto noteDto, UserEntity userEntity, PlaceEntity placeEntity){
         NoteEntity noteEntity = new NoteEntity();
         noteEntity.setNote(Integer.parseInt(noteDto.getNote()));
