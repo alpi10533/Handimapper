@@ -1,7 +1,6 @@
 package com.isep.handimapper.service;
 
 import com.isep.handimapper.business.PlaceEntity;
-import com.isep.handimapper.business.UserEntity;
 import com.isep.handimapper.dao.PlaceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -23,4 +22,5 @@ public class PlaceService {
     public PlaceEntity findPlaceById(String id) {
         return placeRepository.findByIdPlace(id);
     }
+
 }

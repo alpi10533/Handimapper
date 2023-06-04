@@ -5,11 +5,10 @@ import com.isep.handimapper.business.PlaceEntity;
 import com.isep.handimapper.business.UserEntity;
 import com.isep.handimapper.dao.NoteRepository;
 import com.isep.handimapper.util.NoteDto;
-import com.isep.handimapper.util.UserDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
+import java.util.List;
 
 @Service
 public class NoteService {
@@ -32,20 +31,26 @@ public class NoteService {
         noteRepository.save(noteEntity);
     }
 
-    public String calculateStarMean(Set<NoteEntity> noteEntities) {
-        double average = noteEntities.stream()
-                .mapToDouble(NoteEntity::getNote)
-                .average()
-                .orElse(0.0);
-        StringBuilder stars = new StringBuilder();
-        int fullStars = (int) average;
-        stars.append("★".repeat(Math.max(0, fullStars)));
-        int emptyStars = 5 - stars.length();
-        stars.append("☆".repeat(Math.max(0, emptyStars)));
-        return stars.toString();
+    public String calculateStarMean(PlaceEntity placeEntity) {
+        List<NoteEntity> noteEntities = noteRepository.findAllByPlace(placeEntity);
+        if (noteEntities.isEmpty()) {
+            return "";
+        } else {
+            double average = noteEntities.stream()
+                    .mapToDouble(NoteEntity::getNote)
+                    .average()
+                    .orElse(0.0);
+            StringBuilder stars = new StringBuilder();
+            int fullStars = (int) average;
+            stars.append("★".repeat(Math.max(0, fullStars)));
+            int emptyStars = 5 - stars.length();
+            stars.append("☆".repeat(Math.max(0, emptyStars)));
+            return stars.toString();
+        }
     }
 
     public NoteEntity findNoteByUserAndPlace(UserEntity userEntity, PlaceEntity placeEntity) {
         return noteRepository.findByUserAndPlace(userEntity, placeEntity);
     }
+
 }

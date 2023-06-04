@@ -80,12 +80,13 @@
                 <div class="card">
                     <div class="card-header container">
                         <div class="row">
-                            <div class="col-sm-8">
+                            <div class="col-sm-6">
                                 <h4 id="name"></h4>
                             </div>
                             <div class="col text-end mr-0">
                                 <a id="note-place" class="btn btn-primary me-2">Noter</a>
-                                <a id="review-place" class="btn btn-primary">Rédiger un avis</a>
+                                <a id="review-place" class="btn btn-primary me-2">Rédiger un avis</a>
+                                <a id="add-equipment" class="btn btn-primary">Ajouter un équipement</a>
                             </div>
                         </div>
                     </div>
@@ -130,7 +131,7 @@
                                 }
                             });
                             if (needToGetDetails) {
-                                getGoogleDetails(placeId);
+                                getPlaceDetails(placeId);
                             }
                         } else {
                             console.log("Aucun résultat trouvé");
@@ -157,20 +158,21 @@
 
         }
 
-        function getGoogleDetails(placeId) {
-            fetch("http://"+apiIp+":"+apiPort+"/place-google-details"
+        function getPlaceDetails(placeId) {
+            fetch("http://"+apiIp+":"+apiPort+"/place-details"
                 +"?placeId="+placeId)
                 .then(response => response.json())
-                .then(data => {
-                    displayGoogleDetails(data['result'])
-                })
+                .then(data => displayPlaceDetails(data))
                 .catch(error => {
                     console.log(error);
                 });
         }
 
-        function displayGoogleDetails(result) {
-            $("#name").text(result['name']);
+        function displayPlaceDetails(data) {
+            let googleDetails = JSON.parse(data.googleDetails);
+            googleDetails = googleDetails['result'];
+            console.log(googleDetails)
+            $("#name").text(googleDetails['name'] + " " + data.starMean);
             $("#details-list").empty();
             detailsDO = [
                 {
@@ -180,32 +182,31 @@
                     content: [
                         {
                             title: "Adresse : ",
-                            text: result["formatted_address"],
+                            text: googleDetails["formatted_address"],
                         },
                         {
                             title: "Coordonnées: ",
-                            text: result["geometry"]["location"].lat+" "+result["geometry"]["location"].lng,
+                            text: googleDetails["geometry"]["location"].lat+" "+googleDetails["geometry"]["location"].lng,
                         }
                     ]
                 },
                 {
-                    name: "Accessibilité",
+                    name: "Equipements",
                     exended: true,
-                    id: "accessibility",
-                    content: [
-                        {
-                            title: "ascenseur: ",
-                            text: "oui",
-                        },
-                        {
-                            title: "escalator: ",
-                            text: "non",
-                        },
-                        {
-                            title: "note d'accesibilité du lieux: ",
-                            text: "80%",
-                        }
-                    ]
+                    id: "equipment",
+                    content: data.equipments.map(equipment => ({
+                        title: equipment.type + ": ",
+                        text: equipment.status,
+                    })),
+                },
+                {
+                    name: "Avis",
+                    exended: false,
+                    id: "review",
+                    content: data.reviews.map(review => ({
+                        title: review.name + ": ",
+                        text: review.review,
+                    })),
                 }
             ];
             detailsDO.forEach(element => {
@@ -225,19 +226,45 @@
                         );
                 });
             });
-            $("#card-address").append("<li><b>addresse:</b> "+result['formatted_address']+"</li>");
+            $("#card-address").append("<li><b>addresse:</b> "+googleDetails['formatted_address']+"</li>");
             $("#note-place").click(function(event) {
                 event.preventDefault();
-                window.location.href="note-place/"+result["place_id"];
+                const url = new URL(window.location.href);
+                const path = "note-place/" + encodeURIComponent(googleDetails["place_id"]);
+                if (url.searchParams.has("continue")) {
+                    url.searchParams.delete("continue");
+                }
+                window.location.href = url.origin + "/" + path + url.search;
+
+            })
+            $("#review-place").click(function(event) {
+                event.preventDefault();
+                const url = new URL(window.location.href);
+                const path = "review-place/" + encodeURIComponent(googleDetails["place_id"]);
+                if (url.searchParams.has("continue")) {
+                    url.searchParams.delete("continue");
+                }
+                window.location.href = url.origin + "/" + path + url.search;
+
+            })
+            $("#add-equipment").click(function(event) {
+                event.preventDefault();
+                const url = new URL(window.location.href);
+                const path = "add-equipment/" + encodeURIComponent(googleDetails["place_id"]);
+                if (url.searchParams.has("continue")) {
+                    url.searchParams.delete("continue");
+                }
+                window.location.href = url.origin + "/" + path + url.search;
+
             })
             $("#redirect-maps").click(function(event) {
                 event.preventDefault();
-                window.open(result["url"]);
+                window.open(googleDetails["url"]);
             })
             $("#details").css("display", "block");
         }
     </script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBv1RNdSPkEVqTjPP6sL5y9KOKUDJLqxPg&libraries=places&callback=initMap"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDW2AIOAR3VKJrNnOYt_IKGVk2aVg_uld4&libraries=places&callback=initMap"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script></body>
 </html>

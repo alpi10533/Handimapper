@@ -7,8 +7,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
+
 public interface NoteRepository extends JpaRepository<NoteEntity,Long> {
 
     @Query("select u from NoteEntity u where u.userEntity = :x and u.placeEntity = :y")
     NoteEntity findByUserAndPlace(@Param("x") UserEntity userEntity, @Param("y") PlaceEntity placeEntity);
+
+    @Query("select u from NoteEntity u where u.placeEntity = :x")
+    List<NoteEntity> findAllByPlace(@Param("x") PlaceEntity placeEntity);
 }
