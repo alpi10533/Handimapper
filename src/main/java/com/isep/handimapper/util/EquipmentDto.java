@@ -10,11 +10,12 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class NoteDto {
+public class EquipmentDto {
 
-    private  int idNote;
+    @NotEmpty(message = "Le type n''est pas valide !")
+    private String type;
 
-    @NotEmpty(message = "La note n''est pas valide !")
-    private String note;
+    @NotEmpty(message = "Le statut n''est pas valide !")
+    private String status;
 
 }

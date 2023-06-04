@@ -11,8 +11,12 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReviewDto {
+
     private int idReview;
 
-    @NotEmpty(message = "Le commentaire n'est pas valide!")
+    private String name;
+
+    @NotEmpty(message = "Le commentaire n''est pas valide!")
     private String review;
+
 }

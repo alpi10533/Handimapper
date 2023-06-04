@@ -1,14 +1,14 @@
 package com.isep.handimapper.service;
 
-import com.isep.handimapper.business.NoteEntity;
 import com.isep.handimapper.business.PlaceEntity;
 import com.isep.handimapper.business.ReviewEntity;
 import com.isep.handimapper.business.UserEntity;
 import com.isep.handimapper.dao.ReviewRepository;
-import com.isep.handimapper.util.NoteDto;
 import com.isep.handimapper.util.ReviewDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class ReviewService {
@@ -34,6 +34,10 @@ public class ReviewService {
 
     public ReviewEntity findReviewByUserAndPlace(UserEntity userEntity, PlaceEntity placeEntity) {
         return reviewRepository.findByUserAndPlace(userEntity, placeEntity);
+    }
+
+    public List<ReviewEntity> findAllReviewsByPlace(PlaceEntity placeEntity) {
+        return reviewRepository.findAllByPlace(placeEntity);
     }
 
 }

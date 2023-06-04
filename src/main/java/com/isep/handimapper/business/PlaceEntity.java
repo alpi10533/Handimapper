@@ -18,7 +18,4 @@ public class PlaceEntity {
     @Column(name = "id_place", unique = true, nullable = false)
     private String idPlace;
 
-    @Column(name = "name", nullable = false)
-    private String name;
-
 }

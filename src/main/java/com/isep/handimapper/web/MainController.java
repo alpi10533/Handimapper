@@ -1,16 +1,8 @@
 package com.isep.handimapper.web;
 
-import com.isep.handimapper.business.NoteEntity;
-import com.isep.handimapper.business.PlaceEntity;
-import com.isep.handimapper.business.ReviewEntity;
-import com.isep.handimapper.business.UserEntity;
-import com.isep.handimapper.service.NoteService;
-import com.isep.handimapper.service.PlaceService;
-import com.isep.handimapper.service.ReviewService;
-import com.isep.handimapper.service.UserService;
-import com.isep.handimapper.util.NoteDto;
-import com.isep.handimapper.util.ReviewDto;
-import com.isep.handimapper.util.UserDto;
+import com.isep.handimapper.business.*;
+import com.isep.handimapper.service.*;
+import com.isep.handimapper.util.*;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +15,9 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @CrossOrigin
 @Controller
 public class MainController {
@@ -31,13 +26,15 @@ public class MainController {
     private final PlaceService placeService;
     private final NoteService noteService;
     private final ReviewService reviewService;
+    private final EquipmentService equipmentService;
 
     @Autowired
-    public MainController(UserService userService, PlaceService placeService, NoteService noteService, ReviewService reviewService) {
+    public MainController(UserService userService, PlaceService placeService, NoteService noteService, ReviewService reviewService, EquipmentService equipmentService) {
         this.userService = userService;
         this.placeService = placeService;
         this.noteService = noteService;
         this.reviewService = reviewService;
+        this.equipmentService = equipmentService;
     }
 
     @GetMapping("/")
@@ -78,27 +75,13 @@ public class MainController {
         return "profile";
     }
 
-    @GetMapping("/place-details")
-    public ResponseEntity<?> getPlaceDetails(@RequestParam String placeId) {
-        String apiKey = "AIzaSyBv1RNdSPkEVqTjPP6sL5y9KOKUDJLqxPg";
-        String url = "https://maps.googleapis.com/maps/api/place/details/json"
-                + "?place_id=" + placeId
-                + "&fields="
-                + "&key=" + apiKey;
-        WebClient webClient = WebClient.create();
-        String responseBody = webClient.get()
-                .uri(url)
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .bodyToMono(String.class)
-                .block();
-        return ResponseEntity.ok(responseBody);
-    }
-
     @GetMapping("/note-place/{id}")
     public String notePlace(@PathVariable("id") String id, Model model, HttpSession session, Authentication authentication) {
         UserEntity userEntity = userService.findUserByEmail(authentication.getName());
         PlaceEntity placeEntity = placeService.findPlaceById(id);
+        if (placeEntity == null) {
+            placeService.savePlace(id);
+        }
         NoteEntity noteEntity = noteService.findNoteByUserAndPlace(userEntity, placeEntity);
         NoteDto noteDto = new NoteDto();
         if (noteEntity != null) {
@@ -111,7 +94,7 @@ public class MainController {
     }
 
     @PostMapping("/note-place")
-    public String processNoteHousing(@Valid @ModelAttribute("noteDto") NoteDto noteDto, BindingResult result, Model model, HttpSession session, Authentication authentication) {
+    public String processNotePlace(@Valid @ModelAttribute("noteDto") NoteDto noteDto, BindingResult result, Model model, HttpSession session, Authentication authentication) {
         if (result.hasErrors()) {
             model.addAttribute("noteDto", noteDto);
             return "note-place";
@@ -131,6 +114,9 @@ public class MainController {
     public String reviewPlace(@PathVariable("id") String id, Model model, HttpSession session, Authentication authentication) {
         UserEntity userEntity = userService.findUserByEmail(authentication.getName());
         PlaceEntity placeEntity = placeService.findPlaceById(id);
+        if (placeEntity == null) {
+            placeService.savePlace(id);
+        }
         ReviewEntity reviewEntity = reviewService.findReviewByUserAndPlace(userEntity, placeEntity);
         ReviewDto reviewDto = new ReviewDto();
         if (reviewEntity != null) {
@@ -143,7 +129,7 @@ public class MainController {
     }
 
     @PostMapping("/review-place")
-    public String processNoteHousing(@Valid @ModelAttribute("reviewDto") ReviewDto reviewDto, BindingResult result, Model model, HttpSession session, Authentication authentication) {
+    public String processReviewPlace(@Valid @ModelAttribute("reviewDto") ReviewDto reviewDto, BindingResult result, Model model, HttpSession session, Authentication authentication) {
         if (result.hasErrors()) {
             model.addAttribute("reviewDto", reviewDto);
             return "review-place";
@@ -156,6 +142,69 @@ public class MainController {
             UserEntity userEntity = userService.findUserByEmail(authentication.getName());
             reviewService.saveReview(reviewDto, userEntity, placeEntity);
         }
+        return "redirect:/";
+    }
+
+    @GetMapping("/place-details")
+    public ResponseEntity<?> getPlaceDetails(@RequestParam String placeId) {
+        PlaceEntity placeEntity = placeService.findPlaceById(placeId);
+        String starMean = noteService.calculateStarMean(placeEntity);
+        List<ReviewEntity> reviews = reviewService.findAllReviewsByPlace(placeEntity);
+        List<EquipmentEntity> equipments = equipmentService.findAllEquipmentsByPlace(placeEntity);
+        String apiKey = "AIzaSyDW2AIOAR3VKJrNnOYt_IKGVk2aVg_uld4";
+        String url = "https://maps.googleapis.com/maps/api/place/details/json"
+                + "?place_id=" + placeId
+                + "&key=" + apiKey;
+        WebClient webClient = WebClient.create();
+        String responseBody = webClient.get()
+                .uri(url)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(String.class)
+                .block();
+        PlaceDto placeDto = new PlaceDto();
+        placeDto.setStarMean(starMean);
+        List<ReviewDto> reviewDtoS = new ArrayList<>();
+        for (ReviewEntity reviewEntity : reviews) {
+            ReviewDto reviewDto = new ReviewDto();
+            reviewDto.setReview(reviewEntity.getReview());
+            reviewDto.setName(reviewEntity.getUserEntity().getEmail());
+            reviewDtoS.add(reviewDto);
+        }
+        placeDto.setReviews(reviewDtoS);
+        List<EquipmentDto> equipmentDtoS = new ArrayList<>();
+        for (EquipmentEntity equipmentEntity : equipments) {
+            EquipmentDto equipmentDto = new EquipmentDto();
+            equipmentDto.setType(equipmentEntity.getType());
+            equipmentDto.setStatus(equipmentEntity.getStatus());
+            equipmentDtoS.add(equipmentDto);
+        }
+        placeDto.setEquipments(equipmentDtoS);
+        placeDto.setGoogleDetails(responseBody);
+        return ResponseEntity.ok(placeDto);
+    }
+
+    @GetMapping("/add-equipment/{id}")
+    public String addEquipment(@PathVariable("id") String id, Model model, HttpSession session) {
+        PlaceEntity placeEntity = placeService.findPlaceById(id);
+        if (placeEntity == null) {
+            placeService.savePlace(id);
+        }
+        EquipmentDto equipmentDto = new EquipmentDto();
+        session.setAttribute("placeEntity", placeEntity);
+        model.addAttribute("equipmentDto", equipmentDto);
+        return "add-equipment";
+    }
+
+    @PostMapping("/add-equipment")
+    public String processAddEquipment(@Valid @ModelAttribute("equipmentDto") EquipmentDto equipmentDto, BindingResult result, Model model, HttpSession session, Authentication authentication) {
+        if (result.hasErrors()) {
+            model.addAttribute("equipmentDto", equipmentDto);
+            return "add-equipment";
+        }
+        PlaceEntity placeEntity = (PlaceEntity) session.getAttribute("placeEntity");
+        UserEntity userEntity = userService.findUserByEmail(authentication.getName());
+        equipmentService.savEquipment(equipmentDto, userEntity, placeEntity);
         return "redirect:/";
     }
 
