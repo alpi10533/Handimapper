@@ -11,7 +11,7 @@ services:
     ports:
       - "${BDD_EXTERNAL_PORT}:${BDD_NETWORK_PORT}"
   api:
-    build: Handimapper
+    build: ./
     ports:
       - "${API_EXTERNAL_PORT}:${API_NETWORK_PORT}"
     depends_on:
