@@ -125,9 +125,12 @@
                             const result = results[0];
                             const placeId = result.place_id;
                             let needToGetDetails = false;
+                            $("#details-list").empty();
                             result.types.forEach(function(type) {
                                 if (type === "subway_station" || type === "train_station" || type === "transit_station") {
                                     needToGetDetails = true;
+                                } else {
+                                    $("#details").css("display", "none");
                                 }
                             });
                             if (needToGetDetails) {
@@ -229,32 +232,16 @@
             $("#card-address").append("<li><b>addresse:</b> "+googleDetails['formatted_address']+"</li>");
             $("#note-place").click(function(event) {
                 event.preventDefault();
-                const url = new URL(window.location.href);
-                const path = "note-place/" + encodeURIComponent(googleDetails["place_id"]);
-                if (url.searchParams.has("continue")) {
-                    url.searchParams.delete("continue");
-                }
-                window.location.href = url.origin + "/" + path + url.search;
-
+                window.location.href = "http://"+apiIp+":"+apiPort+ "/note-place/" + googleDetails["place_id"];
             })
             $("#review-place").click(function(event) {
                 event.preventDefault();
-                const url = new URL(window.location.href);
-                const path = "review-place/" + encodeURIComponent(googleDetails["place_id"]);
-                if (url.searchParams.has("continue")) {
-                    url.searchParams.delete("continue");
-                }
-                window.location.href = url.origin + "/" + path + url.search;
+                window.location.href = "http://"+apiIp+":"+apiPort+ "/review-place/" + googleDetails["place_id"];
 
             })
             $("#add-equipment").click(function(event) {
                 event.preventDefault();
-                const url = new URL(window.location.href);
-                const path = "add-equipment/" + encodeURIComponent(googleDetails["place_id"]);
-                if (url.searchParams.has("continue")) {
-                    url.searchParams.delete("continue");
-                }
-                window.location.href = url.origin + "/" + path + url.search;
+                window.location.href = "http://"+apiIp+":"+apiPort+ "/add-equipment/" + googleDetails["place_id"];
 
             })
             $("#redirect-maps").click(function(event) {
