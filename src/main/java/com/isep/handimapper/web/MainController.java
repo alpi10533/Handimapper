@@ -80,7 +80,7 @@ public class MainController {
         UserEntity userEntity = userService.findUserByEmail(authentication.getName());
         PlaceEntity placeEntity = placeService.findPlaceById(id);
         if (placeEntity == null) {
-            placeService.savePlace(id);
+            placeEntity = placeService.savePlace(id);
         }
         NoteEntity noteEntity = noteService.findNoteByUserAndPlace(userEntity, placeEntity);
         NoteDto noteDto = new NoteDto();
@@ -115,7 +115,7 @@ public class MainController {
         UserEntity userEntity = userService.findUserByEmail(authentication.getName());
         PlaceEntity placeEntity = placeService.findPlaceById(id);
         if (placeEntity == null) {
-            placeService.savePlace(id);
+            placeEntity = placeService.savePlace(id);
         }
         ReviewEntity reviewEntity = reviewService.findReviewByUserAndPlace(userEntity, placeEntity);
         ReviewDto reviewDto = new ReviewDto();
@@ -138,6 +138,7 @@ public class MainController {
         PlaceEntity placeEntity = (PlaceEntity) session.getAttribute("placeEntity");
         if (reviewEntity != null) {
             reviewService.updateReview(reviewEntity, reviewDto);
+            placeEntity = (PlaceEntity) session.getAttribute("placeEntity");
         } else {
             UserEntity userEntity = userService.findUserByEmail(authentication.getName());
             reviewService.saveReview(reviewDto, userEntity, placeEntity);
@@ -188,7 +189,7 @@ public class MainController {
     public String addEquipment(@PathVariable("id") String id, Model model, HttpSession session) {
         PlaceEntity placeEntity = placeService.findPlaceById(id);
         if (placeEntity == null) {
-            placeService.savePlace(id);
+            placeEntity = placeService.savePlace(id);
         }
         EquipmentDto equipmentDto = new EquipmentDto();
         session.setAttribute("placeEntity", placeEntity);

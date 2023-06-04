@@ -14,9 +14,10 @@ public class PlaceService {
         this.placeRepository = placeRepository;
     }
 
-    public void savePlace(String idPlace){
+    public PlaceEntity savePlace(String idPlace){
         PlaceEntity placeEntity = new PlaceEntity(idPlace);
         placeRepository.save(placeEntity);
+        return placeEntity;
     }
 
     public PlaceEntity findPlaceById(String id) {
